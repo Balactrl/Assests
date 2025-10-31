@@ -19,6 +19,17 @@ def load_data():
         st.error(f"Error loading data: {e}")
         return pd.DataFrame()
 
+def save_data(df):
+    """Save the dataframe to Excel and clear the cache"""
+    try:
+        df.to_excel("assets.xlsx", index=False)
+        # Clear the cached data to force a reload
+        load_data.clear()
+        return True
+    except Exception as e:
+        st.error(f"Error saving data: {e}")
+        return False
+
 # Load the data
 df = load_data()
 
@@ -65,14 +76,16 @@ if search_siteid:
                             for column, value in new_values.items():
                                 df.at[index, column] = value
                             
-                            # Save back to Excel
-                            df.to_excel("assets.xlsx", index=False)
-                            st.success("Data updated successfully!")
-                            # Close the expander for this item
-                            try:
-                                st.session_state[exp_key] = False
-                            except Exception:
-                                pass
+                            # Save back to Excel using the save function
+                            if save_data(df):
+                                st.success("Data updated successfully!")
+                                # Close the expander for this item
+                                try:
+                                    st.session_state[exp_key] = False
+                                except Exception:
+                                    pass
+                                # Force reload the data
+                                df = load_data()
                             # Try to rerun programmatically if available; otherwise instruct user to refresh.
                             if hasattr(st, "experimental_rerun"):
                                 st.experimental_rerun()
